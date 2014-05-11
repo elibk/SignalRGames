@@ -1,0 +1,25 @@
+﻿.field {
+    
+border:2px solid #a1a1a1;
+padding:10px 30px; 
+background:#dddddd;
+width:20px;
+height:60px;
+border-radius:50px;
+display:inline-block;
+font-size:xx-large;
+overflow:hidden;
+}
+
+.field.resolved {
+
+background:#8FC462;
+
+}
+
+
+.field.currentlyopen {
+
+background:#FDDB5C;
+
+}

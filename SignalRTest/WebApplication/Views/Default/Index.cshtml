@@ -1,0 +1,105 @@
+﻿@{
+    Layout = null;
+}
+@model System.String
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <link href="~/Content/bootstrap.css" rel="stylesheet" />
+    <title></title>
+
+    <script src="~/Scripts/jquery-1.9.1.js"></script>
+    <script src="~/Scripts/jquery.signalR-2.0.3.js"></script>
+    <script src="~/signalr/hubs"></script>
+    <script src="~/Scripts/bootstrap.js"></script>
+    <link href="~/Content/StyleSheet.css" rel="stylesheet" />
+   
+</head>
+<body>
+
+    <div class="well container text-center" id="field">
+        @for (int row = 0; row < (int)ViewBag.Rows; row++)
+        {
+            <div class="row">
+                @for (int col = 0; col < (int)ViewBag.Cols; col++)
+                {
+                    <div class="field" data-col="@col" data-row="@row">
+                     <br />
+                    </div>
+                }
+            </div>
+        }
+
+        
+       
+        <script>
+            $(function () {
+                // Reference the auto-generated proxy for the hub.
+                var chat = $.connection.chat;
+
+                
+                // Create a function that the hub can call back to display messages.
+                chat.client.openBlock = function (row, col, symbol) {
+                    // Add the message to the page.
+                    
+                    var opened = $('div[data-active=true]');
+                    if (opened.length == 2) {
+                        if ($(opened[0]).text() !== $(opened[1]).text()) {
+                            opened.html("<br>");
+                        }
+                        else {
+                            opened.addClass("resolved");
+                        }
+                        opened.removeClass("currentlyopen");
+                        opened.removeAttr("data-active");
+                    }
+                    $('div[data-row=' + row + '][data-col=' + col + ']').attr("data-active", true).html('<span>' + symbol + "</span>").addClass("currentlyopen");
+                }
+
+                chat.client.gameOver = function () {
+                    // Add the message to the page.
+                    $("#field").html('<img src="' + "@Url.Content("~/Content/Images/game_over.png")" + '"/>');
+                }
+               
+                chat.client.showBomb = function (row, col) {
+                    // Add the message to the page.
+                    var image = $('<img src="' + "@Url.Content("~/Content/Images/Bomb.png")" + '"/>')
+                    $('div[data-row=' + row + '][data-col=' + col + ']').html('');
+                    $('div[data-row=' + row + '][data-col=' + col + ']').append(image);
+                   
+                    image.fadeOut(2000, function () {
+                        $('div[data-row=' + row + '][data-col=' + col + ']').html("<br>");
+                        $('.field').click(function () {
+                            // Call the Send method on the hub.
+                            //check for end of the game
+                       
+                            if (!($(this).hasClass('currentlyopen') || $(this).hasClass('resolved'))) {
+                                chat.server.send($(this).attr("data-row"), $(this).attr("data-col"));
+                            }
+                            var fieldNotOpened = $('.field').not('.currentlyopen,.resolved');
+                            // 1 is the bomb 1 is the currentclicked
+                            if (fieldNotOpened.length == 2) {
+                                $("#field").html('<img src="' + "@Url.Content("~/Content/Images/YouWin.png")" + '"/>');
+                            }
+
+                            // Clear text box and reset focus for next comment.
+                       
+                        });
+                    });
+                }
+
+                // Start the connection.
+                $.connection.hub.start().done(function () {
+
+                    chat.server.generateField(5, 5);
+
+                });
+               
+            });
+            
+        </script>
+    </div>
+</body>
+</html>
